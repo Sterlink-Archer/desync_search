@@ -3,14 +3,13 @@
 import requests
 import json
 import time
-from desync_search.data_structures import PageData  # or .core if you keep them in same file
+from desync_search.data_structures import PageData
 import uuid
-import math 
-import time
+import math
 from urllib.parse import urlparse
 import os
 
-API_VERSION = "v0.2.25"
+API_VERSION = "v0.2.26"
 
 def _split_into_equal_sub_lists(lst, max_size=1000):
     """
@@ -39,7 +38,6 @@ def _split_into_equal_sub_lists(lst, max_size=1000):
         sublists.append(lst[start:start + this_chunk_size])
         start += this_chunk_size
     return sublists
-
 
 class DesyncClient:
     """
@@ -165,6 +163,55 @@ class DesyncClient:
         data_dict["bulk_search_id"] = str(bulk_search_id)
         return data_dict
 
+    def queue_scrape(self,
+                     target_list,
+                     *,
+                     bulk_search_id=None,
+                     search_type="crawler",
+                     priority=0,
+                     max_attempts=2,
+                     timeout_sec=60.0,
+                     poll_every_sec=0.5,
+                     return_html=False,
+                     html_truncate_bytes=200000) -> list:
+        """
+        Enqueue a list of URLs into the server-side Postgres queue and
+        synchronously wait (up to timeout_sec) for results. Returns a list of
+        PageData objects for whatever finished within the time budget. If all
+        finish early, returns early.
+
+        This mirrors your Lambda tester's contract.
+        """
+        if not isinstance(target_list, list) or not target_list:
+            raise ValueError("queue_scrape requires a non-empty list of URLs.")
+
+        bulk_search_id = str(bulk_search_id or uuid.uuid4())
+        payload = {
+            "user_api_key": self.user_api_key,
+            "timestamp": int(time.time()),
+            "operation": "queue_scrape",
+            "flags": {
+                "bulk_search_id": bulk_search_id,
+                "search_type": search_type,
+                "priority": int(priority),
+                "max_attempts": int(max_attempts),
+                "timeout_sec": float(timeout_sec),
+                "poll_every_sec": float(poll_every_sec),
+                "return_html": bool(return_html),
+                "html_truncate_bytes": int(html_truncate_bytes) if html_truncate_bytes is not None else None,
+                "target_list": target_list,
+            },
+            "metadata": {"api_version": API_VERSION}
+        }
+
+        # Give the HTTP call enough time (Lambda times out at 45/60s sometimes)
+        http_timeout = max(float(timeout_sec) + 15.0, 30.0)
+        resp = self._post_and_parse(payload, timeout=http_timeout)
+        result = resp.get("data", {}) or {}
+
+        # 'result' has 'results': [ {...page_data-like...}, ... ]
+        rows = result.get("results", [])
+        return [PageData.from_dict(r) for r in rows]
 
     def list_available(self, url_list=None, bulk_search_id=None) -> list:
         """

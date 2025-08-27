@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="desync_search",
-    version="0.2.25",
+    version="0.2.26",
     author="Maksymilian Kubicki",
     author_email="maks@desync.ai",
     description="API for the internet",
