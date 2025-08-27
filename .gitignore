@@ -1,0 +1,26 @@
+# Bytecode / cache
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtualenv / tools
+venv/
+.env/
+.venv/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+
+# Build artifacts
+build/
+dist/
+*.egg
+
+# IDE / miscellany
+.vscode/
+.idea/
+.DS_Store
+*.log
+.coverage
+.pytest_cache/
+.mypy_cache/
