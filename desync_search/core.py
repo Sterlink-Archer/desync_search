@@ -9,7 +9,7 @@ import math
 from urllib.parse import urlparse
 import os
 
-API_VERSION = "v0.2.26"
+API_VERSION = "v0.2.27"
 
 def _split_into_equal_sub_lists(lst, max_size=1000):
     """
@@ -531,13 +531,14 @@ class DesyncClient:
         # Return all discovered PageData objects at all depths
         return all_results
 
-    def _post_and_parse(self, payload):
+    def _post_and_parse(self, payload, *, timeout: float | None = None):
         """
-        Internal helper to POST the payload to self.base_url, parse JSON,
-        and raise RuntimeError if success=False or there's an HTTP error.
+        POST the payload, parse JSON, and raise if success=False.
+        'timeout' overrides the default 20s for long-running ops like queue_scrape.
         """
         try:
-            resp = requests.post(self.base_url, json=payload, timeout=20)
+            req_timeout = timeout if (timeout is not None and timeout > 0) else 20.0
+            resp = requests.post(self.base_url, json=payload, timeout=req_timeout)
             resp.raise_for_status()
             data = resp.json()
             if not data.get("success", False):
