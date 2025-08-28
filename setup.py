@@ -2,9 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="desync_search",
-    version="0.2.27",
-    author="Maksymilian Kubicki",
-    author_email="maks@desync.ai",
+    version="0.2.29",
+    author="Maksymilian Kubicki and Jackson Ballow",
+    author_email="maks@desync.ai and jackson@desync.ai",
     description="API for the internet",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
