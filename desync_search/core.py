@@ -9,7 +9,7 @@ import math
 from urllib.parse import urlparse
 import os
 
-API_VERSION = "v0.2.27"
+API_VERSION = "v0.2.28"
 
 def _split_into_equal_sub_lists(lst, max_size=1000):
     """
